@@ -9,7 +9,6 @@
 import Foundation
 
 struct SearchResponse: Codable {
-    var status: String
     var response: ArticlesObject
 }
 
@@ -17,27 +16,40 @@ struct ArticlesObject: Codable {
     var docs: [Article]
 }
 
-struct Article: Codable {
+class Article: NSObject, Codable {
     var headline: Headline
-    var byline: Byline
-    var abstract: String
     var snippet: String
     var web_url: String
+    var source: String
     var multimedia: [Multimedia]
-}
-
-struct Byline: Codable {
-    var original: String
+    
+    init(headline: Headline, snippet: String, web_url: String, source: String, multimedia: [Multimedia]) {
+        self.headline = headline
+        self.snippet = snippet
+        self.web_url = web_url
+        self.source = source
+        self.multimedia = multimedia
+    }
+    
+    override var description: String {
+        return web_url
+    }
+    
+    override func isEqual(_ object: Any?) -> Bool {
+        return (object as? Article)!.web_url == web_url
+    }
 }
 
 struct Headline: Codable {
     var main: String
+    init(_ headline: String) {
+        main = headline
+    }
 }
 
 struct Multimedia: Codable {
-    var caption: String
-    var credit: String
-    var height: Int
-    var width: Int
     var url: String
+    init(_ url: String) {
+        self.url = url
+    }
 }

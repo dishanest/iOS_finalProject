@@ -9,7 +9,7 @@
 import UIKit
 import SnapKit
 
-class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate {
+class ViewController: UIViewController {
     
     var tableView: UITableView!
     var cellReuseIdentifier = "ArticleCellReuseIdentifier"
@@ -21,10 +21,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     var articles = [Article]()
     
+    let userDefaults = UserDefaults.standard
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        print(containsOnlyCharacters(list: ["apples", "cowboys"]))
         
         title = "NYT Article Search"
         
@@ -32,6 +32,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         navigationController?.navigationBar.barStyle = .black
         navigationController?.navigationBar.isTranslucent = true
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .bookmarks, target: self, action: #selector(pushBookmarkVC))
         
         configureSearchBarView()
         configureSearchButton()
@@ -137,16 +138,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         ])
     }
     
+    @objc func pushBookmarkVC() {
+        navigationController?.pushViewController(BookmarkViewController(), animated: true)
+    }
+    
     func makeRequest(query: [String]) {
         articles = []
         tableView.reloadData()
         loadingLabel.isHidden = false
-        print("made request")
-        print(query)
         NetworkManager.searchArticles(query: query) { articles in
             self.articles = articles
-            print("received request")
-            print(articles)
             DispatchQueue.main.async {
                 self.loadingLabel.isHidden = true
                 self.tableView.reloadData()
@@ -188,22 +189,21 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.present(alert, animated: true, completion: nil)
         }
     }
-    
-    // MARK: UITextFieldDelegate Protocol
-    
+}
+
+extension ViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         searchArticles()
         return true
     }
-    
-    // MARK: UITableViewDataSource Protocol
-    
+
+}
+
+extension ViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: cellReuseIdentifier, for: indexPath) as! ArticleTableViewCell
-        let headline = articles[indexPath.row].headline.main
-        let abstract = articles[indexPath.row].abstract
-        cell.configure(headline: headline, abstract: abstract)
+        cell.configure(article: articles[indexPath.row])
         return cell
     }
     
@@ -215,5 +215,44 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let article = self.articles[indexPath.row]
         let vc = DetailsViewController(article: article)
         self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let selectedArticle = articles[indexPath.row]
+        
+        let decoder = JSONDecoder()
+        var bookmarks = [Article]()
+        if let dataArray = userDefaults.array(forKey: Constants.UserDefaults.bookmarks) as? [Data] {
+            bookmarks = dataArray.map { data in
+                if let decoded = try? decoder.decode(Article.self, from: data) {
+                    return decoded
+                }
+                return Article(headline: Headline("data conversion fail"), snippet: "", web_url: "", source: "", multimedia: [])
+            }
+        }
+        let alreadyBookmarked = bookmarks.contains(selectedArticle)
+        print(bookmarks)
+        let bookmarkAction = UIContextualAction(style: .normal, title:  "", handler: {
+            (ac:UIContextualAction, view:UIView, success:(Bool) -> Void) in
+            if alreadyBookmarked {
+                bookmarks.remove(at: bookmarks.firstIndex(of: selectedArticle)!)
+            } else {
+                bookmarks.append(selectedArticle)
+            }
+            let encoder = JSONEncoder()
+            let encodedBookmarks: [Data] = bookmarks.map { bookmark in
+                if let encodedObject = try? encoder.encode(bookmark) {
+                    return encodedObject
+                }
+                return Data()
+            }
+            self.userDefaults.set(encodedBookmarks, forKey: Constants.UserDefaults.bookmarks)
+            success(true)
+        })
+        
+        if alreadyBookmarked { bookmarkAction.image = UIImage(named: "bookmark.fill") }
+        else { bookmarkAction.image = UIImage(named: "bookmark") }
+        bookmarkAction.backgroundColor = .black
+        return UISwipeActionsConfiguration(actions: [bookmarkAction])
     }
 }

@@ -12,10 +12,10 @@ import Alamofire
 class NetworkManager {
     private static let apiURL = "https://api.nytimes.com/svc/search/v2/articlesearch.json?"
     private static let apiKeyURL = "&api-key=Dnu48mvebUt2HO8lmbaJYDntulihi49G"
+
     
     static func searchArticles(query: [String], completion: @escaping (([Article]) -> Void)) {
         let endpointURL = getEndpointURL(query: query)
-        print("requesting " + endpointURL)
         AF.request(endpointURL, method: .get).validate().responseData { (response) in
             switch response.result {
             case .success(let data):

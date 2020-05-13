@@ -12,7 +12,7 @@ import SnapKit
 class ArticleTableViewCell: UITableViewCell {
 
     let headlineLabel = UILabel()
-    let abstractLabel = UILabel()
+    let sourceLabel = UILabel()
     
     override init (style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -25,11 +25,11 @@ class ArticleTableViewCell: UITableViewCell {
         headlineLabel.font = UIFont(name: "Avenir-Medium", size: 18)!
         contentView.addSubview(headlineLabel)
         
-        abstractLabel.translatesAutoresizingMaskIntoConstraints = false
-        abstractLabel.numberOfLines = 0
-        abstractLabel.textColor = UIColor.lightGray
-        abstractLabel.font = UIFont(name: "Avenir-Medium", size: 14)!
-        contentView.addSubview(abstractLabel)
+        sourceLabel.translatesAutoresizingMaskIntoConstraints = false
+        sourceLabel.numberOfLines = 0
+        sourceLabel.textColor = UIColor.lightGray
+        sourceLabel.font = UIFont(name: "Avenir-Medium", size: 14)!
+        contentView.addSubview(sourceLabel)
         
         setupConstraints()
     }
@@ -43,16 +43,16 @@ class ArticleTableViewCell: UITableViewCell {
             headlineLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: padding/2),
         ])
         NSLayoutConstraint.activate([
-            abstractLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: padding),
-            abstractLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -padding),
-            abstractLabel.topAnchor.constraint(equalTo: headlineLabel.bottomAnchor, constant: lineSpacing),
-            abstractLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -padding/2)
+            sourceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: padding),
+            sourceLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -padding),
+            sourceLabel.topAnchor.constraint(equalTo: headlineLabel.bottomAnchor, constant: lineSpacing),
+            sourceLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -padding/2)
         ])
     }
     
-    func configure (headline: String, abstract: String) {
-        headlineLabel.text = headline
-        abstractLabel.text = abstract
+    func configure (article: Article) {
+        headlineLabel.text = article.headline.main
+        sourceLabel.text = "Source: " + article.source
     }
     
     required init?(coder: NSCoder) {
